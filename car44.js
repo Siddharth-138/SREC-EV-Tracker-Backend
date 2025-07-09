@@ -21,9 +21,9 @@ app.use(cors(corsOptions));
 app.use(Express.json());
 
 // const mqttClient = mqtt.connect(process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883');
-const mqttClient = mqtt.connect('mqtt://test.mosquitto.org');
-
-
+const mqttClient = mqtt.connect('wss://mosquitto-broker-42o0.onrender.com');
+// mqtt://test.mosquitto.org
+// wss://mosquitto-broker-42o0.onrender.com
 
 mqttClient.on('connect', () => {
   console.log('MQTT client connected.');
@@ -50,7 +50,7 @@ function parseDate(dateString) {
   const day = dateString.slice(0, 2);
   const month = dateString.slice(2, 4);
   const year = dateString.slice(4, 6);
-  return 20`${year}-${month}-${day}`;
+  return `20${year}-${month}-${day}`;
 }
 
 function parseTime(timeString) {
@@ -172,7 +172,7 @@ mqttClient.on('message', (topic, message) => {
   carPositions.set(carId, updatedPosition);
   io.emit('locationUpdate', [updatedPosition]);
 
-  console.log(1`📤 Location emitted for Car ${carId}`);
+  console.log(`📤 Location emitted for Car ${carId}`);
 }
 
 
