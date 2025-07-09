@@ -2,27 +2,28 @@ const Express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const cors = require('cors');
-const mqtt = require('mqtt');  // Import MQTT
-require('dotenv').config();    // Import dotenv to load environment variables
+const mqtt = require('mqtt'); 
+require('dotenv').config();    
 
 const app = Express();
 const server = http.Server(app);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3002;
 
 const corsOptions = {
   origin: "*",
   methods: ['GET', 'POST']
 };
 
-// Store car positions
 const carPositions = new Map();
 
 app.use(cors(corsOptions));
 app.use(Express.json());
 
-// MQTT Setup
-const mqttClient = mqtt.connect(process.env.MQTT_BROKER_URL || 'mqtt://34.100.196.132:1883');
+// const mqttClient = mqtt.connect(process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883');
+const mqttClient = mqtt.connect('mqtt://test.mosquitto.org');
+
+
 
 mqttClient.on('connect', () => {
   console.log('MQTT client connected.');
@@ -49,7 +50,7 @@ function parseDate(dateString) {
   const day = dateString.slice(0, 2);
   const month = dateString.slice(2, 4);
   const year = dateString.slice(4, 6);
-  return `20${year}-${month}-${day}`;
+  return 20`${year}-${month}-${day}`;
 }
 
 function parseTime(timeString) {
@@ -58,6 +59,7 @@ function parseTime(timeString) {
   const seconds = timeString.slice(4);
   return `${hours}:${minutes}:${seconds}`;
 }
+
 
 function isValidNMEA(parts) {
   if (parts.length < 9) {
@@ -148,30 +150,33 @@ mqttClient.on('message', (topic, message) => {
   const payload = JSON.parse(message.toString());
 
   if (topic === 'sim7600/nmea') {
-    const { carId, nmea } = payload;
+  const { carId, latitude, longitude } = payload;
 
-    if (!nmea || !carId) {
-      console.warn("Invalid NMEA data received");
-      return;
-    }
-
-    const parsedData = parseNMEA(nmea);
-    if (!parsedData) {
-      console.warn("Failed to parse NMEA data");
-      return;
-    }
-
-    // Directly update the car's position
-    const updatedPosition = {
-      carId,
-      latitude: parsedData.latitude,
-      longitude: parsedData.longitude,
-      ...parsedData
-    };
-
-    carPositions.set(carId, updatedPosition);
-    io.emit('locationUpdate', [updatedPosition]);  // Broadcast the update to clients
+  if (
+    typeof carId === 'undefined' ||
+    typeof latitude !== 'number' ||
+    typeof longitude !== 'number'
+  ) {
+    console.warn("❌ Invalid minimal GPS data received:", payload);
+    return;
   }
+
+  const updatedPosition = {
+    carId,
+    latitude,
+    longitude
+  };
+
+  console.log(`📥 Location from Car ${carId}:`, updatedPosition);
+
+  carPositions.set(carId, updatedPosition);
+  io.emit('locationUpdate', [updatedPosition]);
+
+  console.log(1`📤 Location emitted for Car ${carId}`);
+}
+
+
+
 
   if (topic === 'sim7600/sos') {
     const { carId, message } = payload;
