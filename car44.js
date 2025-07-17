@@ -21,7 +21,7 @@ app.use(cors(corsOptions));
 app.use(Express.json());
 
 // const mqttClient = mqtt.connect(process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883');
-const mqttClient = mqtt.connect('wss://mosquitto-broker-42o0.onrender.com');
+const mqttClient = mqtt.connect('mqtt://test.mosquitto.org');
 // mqtt://test.mosquitto.org
 // wss://mosquitto-broker-42o0.onrender.com
 
